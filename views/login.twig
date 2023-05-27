@@ -1,0 +1,21 @@
+{% include "dashboard/header_noNav.twig" %}
+<div class="container">
+    <div id="logindiv">
+        <img style="margin:auto;display:block" alt="Technic logo" height="80" src="./resources/wrenchIcon.svg">
+        <legend style="text-align:center;margin:1em 0px">Technic Solder</legend>
+        <form method="POST">
+            <input type="hidden" name="action" value="login">
+            {% if error %}
+                <div class="alert alert-danger">
+                    Invalid Username/Password
+                </div>
+            {% endif %}
+            <input style="margin:1em 0px;text-align:center" class="form-control form-control-lg" type="email"
+                   name="email" placeholder="Email Address"/>
+            <input style="margin:1em 0px;text-align:center" class="form-control form-control-lg" type="password"
+                   name="password" placeholder="Password"/>
+            <button style="margin:1em 0px" class="btn btn-primary btn-lg btn-block" type="submit">Log In</button>
+        </form>
+    </div>
+</div>
+{% include "dashboard/footer.twig" %}

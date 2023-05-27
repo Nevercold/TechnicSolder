@@ -48,7 +48,7 @@ class ApiController implements RouteInterface
       ApiService::manageResponse(ModpackService::addModToBuild($id, $buildId, $_POST['mod']), false, true);
     });
     $routingService->getRouter()->any("/api/dash/lib/mods/upload", function (){
-      ApiService::manageResponse(ModpackService::uploadMod());
+      ApiService::manageResponse(ModpackService::uploadMod(), false, true);
     });
 
   }

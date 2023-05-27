@@ -1,0 +1,130 @@
+{% include "dashboard/header.twig" %}
+<div class="main">
+    <div class="card">
+        <h2>Solder Updater</h2>
+        <br/>
+        {% if HMCSW['check']['success'] != true %}
+            {% if HMCSW['check']['response']['error_code'] == 3 %}
+                <div class="alert alert-group card-custom non-shadow alert-danger alert-icon justify-content-center"
+                     role="alert">
+                    <div class="alert-content">
+                        <i class="fa fa-exclamation"></i><b>License-Key expired.</b>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-group card-custom non-shadow alert-danger alert-icon justify-content-center"
+                     role="alert">
+                    <div class="alert-content">
+                        <i class="fa fa-exclamation"></i><b>License-Key not valid for {{ HMCSW['version'] }}.</b>
+                    </div>
+                </div>
+            {% endif %}
+        {% elseif HMCSW['check']['response']['type'] == "not_latest" %}
+            <div class="alert alert-group card-custom non-shadow alert-warning alert-icon justify-content-center"
+                 role="alert">
+                <div class="alert-content">
+                    <i class="fa fa-exclamation-triangle"></i><b>Not the latest version installed. You are {{ HMCSW['check']['response']['behind'] }} versions behind. Latest version: {{ HMCSW['check']['response']['latest_version'] }}</b>
+                </div>
+            </div>
+        {% elseif HMCSW['check']['response']['type'] == "preLatest" %}
+            <div class="alert alert-group card-custom non-shadow alert-info alert-icon justify-content-center"
+                 role="alert">
+                <div class="alert-content"><i class="fa fa-check"></i>
+                    <b>License valid and Latest PreRelease Version installed, but there is no Support for an
+                        PreRelease.</b>
+                </div>
+            </div>
+        {% elseif HMCSW['check']['response']['type'] == "latest" %}
+            <div class="alert alert-group card-custom non-shadow alert-success alert-icon justify-content-center"
+                 role="alert">
+                <div class="alert-content"><i class="fa fa-check"></i>
+                    <b>License valid and Latest version installed</b>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-group card-custom non-shadow alert-danger alert-icon justify-content-center"
+                 role="alert">
+                <div class="alert-content"><i class="fa fa-exclamation"></i>
+                    <b>An error occurred during the license check.</b>
+                </div>
+            </div>
+        {% endif %}
+        {% if HMCSW['check']['success'] %}
+            {% if HMCSW['check']['response']['installed_version']['deprecated'] == true %}
+                <div class="alert alert-group card-custom non-shadow alert-warning alert-icon justify-content-center text-center"
+                     role="alert" data-bs-color="primary">
+                    <b>Version is out of date. Security is no longer guaranteed. Please update as soon as
+                        possible.</b>
+                </div>
+            {% endif %}
+            <h3 class="font-weight-bold">Changelog</h3>
+            <hr/>
+            {% for id, version in HMCSW['check']['response']['versions'] %}
+                {% if version['preRelease'] == true %}
+                    <p><span class="badge bg-secondary">PreRelease</span><p>
+                {% endif %}
+                <h4 class="font-weight-bold">{{ version['title'] }}</h4>
+                <h4 class="font-weight-bold">{{ id }} | {{ version['name'] }}/{{ version['version'] }}</h4>
+
+                <h6>{{ version['release_date'] }}</h6>
+                {% if version['changeLog']['add']|length != 0 %}
+                    <br>
+                    <h5 class="font-weight-bold">Added</h5>
+                    <ul>
+                        {% for item in version['changeLog']['add'] %}
+                            <li><h6>{{ item }}</h6></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if version['changeLog']['remove']|length != 0 %}
+                    <br>
+                    <h5 class="font-weight-bold">Removed</h5>
+                    <ul>
+                        {% for item in version['changeLog']['remove'] %}
+                            <li><h6>{{ item }}</h6></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if version['changeLog']['bug']|length != 0 %}
+                    <br>
+                    <h5 class="font-weight-bold">Fixed Bugs</h5>
+                    <ul>
+                        {% for item in version['changeLog']['bug'] %}
+                            <li><h6>{{ item }}</h6></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <hr/>
+            {% endfor %}
+        {% endif %}
+
+
+    </div>
+
+    <div class="card text-white bg-info mb3" style="padding: 0px">
+        <div class="card-header">How to update?</div>
+        <div class="card-body">
+            <p class="card-text">
+                1. Open SSH client and connect to <?php echo $_SERVER['HTTP_HOST'] ?>. <br/>
+                2. login with your credentials <br/>
+                3. write: <br/>
+                <em>cd <?php echo dirname(dirname(get_included_files()[0])); ?> </em><br/>
+                <em>git clone
+                    <?php if ($newversion['stream']=="Dev"||$settings['dev_builds']=="on") {
+                                            echo "--single-branch --branch Dev";
+                                        } ?>
+                    https://github.com/TheGameSpider/TechnicSolder.git SolderUpdate </em> <br/>
+                <em>cp -a SolderUpdate/. TechnicSolder/</em> <br>
+                <em>rm -rf SolderUpdate</em> <br>
+                <em>chown -R www-data TechnicSolder</em>
+            </p>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#nav-settings").trigger('click');
+    });
+</script>
+{% include "dashboard/footer.twig" %}

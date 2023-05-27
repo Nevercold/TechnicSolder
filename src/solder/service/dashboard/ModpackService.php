@@ -32,12 +32,20 @@ class ModpackService
 
   public static function createNewBuild(int $id, string $name, bool $empty = false): void
   {
-    if ($empty) {
-      Service::getDatabaseService()->prepare("INSERT INTO builds(`name`,`modpack`,`public`) VALUES (?, ?, ?)", [$name, $id, 0]);
-    } else {
-      Service::getDatabaseService()->prepare("INSERT INTO builds(`name`,`modpack`,`public`) SELECT `name`,`modpack`,`public` FROM `builds` WHERE `modpack` = ? ORDER BY `id` DESC LIMIT 1", [$id]);
-      Service::getDatabaseService()->prepare("UPDATE `builds` SET `name` = ? WHERE `modpack` = ? ORDER BY `id` DESC LIMIT 1", [$name, $id]);
-      Service::getDatabaseService()->prepare("UPDATE `builds` SET `public` = 0 WHERE `modpack` = ? ORDER BY `id` DESC LIMIT 1", [$id]);
+    Service::getDatabaseService()->prepare("INSERT INTO builds(`name`,`modpack`,`public`) VALUES (?, ?, ?)", [$name, $id, 0]);
+    $buildId = Service::getDatabaseService()->lastInsertId("id");
+    if (!$empty) {
+      $build = ModpackService::getModpack($id);
+
+      if ($build['latest']) {
+        $latestStatement = Service::getDatabaseService()->prepare("SELECT * FROM builds WHERE id = ?", [$build['latest']['id']]);
+        if ($latestStatement->rowCount() != 0) {
+          $latest = $latestStatement->fetch();
+
+          Service::getDatabaseService()->prepare("UPDATE builds SET `mods` = ?, minecraft = ?, java = ?, memory = ?, clients = ? WHERE id = ?", [$latest['mods'], $latest['minecraft'], $latest['java'], $latest['memory'], $latest['clients'], $buildId]);
+        }
+      }
+
     }
 
     Service::getDatabaseService()->prepare("UPDATE `modpacks` SET `latest` = ? WHERE `id` = ?", [$name, $id]);
@@ -48,9 +56,9 @@ class ModpackService
     Service::getDatabaseService()->prepare("UPDATE `modpacks` SET `recommended` = ? WHERE `id` = ?", [$build, $id]);
   }
 
-  public static function deleteBuild(int $id, string $build): void
+  public static function deleteBuild(int $id, string $buildId): void
   {
-    Service::getDatabaseService()->prepare("DELETE FROM builds WHERE modpack = ? AND name = ?", [$id, $build]);
+    Service::getDatabaseService()->prepare("DELETE FROM builds WHERE modpack = ? AND id = ?", [$id, $buildId]);
   }
 
   public static function getModpackBuild($id, $buildId): array
@@ -78,7 +86,7 @@ class ModpackService
       }
       $rowM = $statementM->fetch();
 
-      if($rowM['type'] == ModType::FORGE->value) {
+      if ($rowM['type'] == ModType::FORGE->value) {
         $forge = $rowM;
         continue;
       }
@@ -148,7 +156,7 @@ class ModpackService
         "public" => $rowB['public'] == 1,
       ];
 
-      if ($rowB['name'] == $row['latest']) {
+      if ($rowB['public'] == 1) {
         $latest = $build;
       }
       if ($rowB['name'] == $row['recommended']) {
@@ -188,7 +196,7 @@ class ModpackService
 
     while ($row = $statement->fetch()) {
       $build = TechnicPackService::getModpackBuild($row['name'], 999);
-      if(isset($build['error'])) {
+      if (isset($build['error'])) {
         $build = false;
       }
 
@@ -321,6 +329,11 @@ class ModpackService
   public static function editModVersion($mod, int $versionId, mixed $version, mixed $mcversion, mixed $slug, mixed $url, mixed $md5): void
   {
     Service::getDatabaseService()->prepare("UPDATE mods SET version = ?, mcversion = ?, filename = ?, url = ?, md5 = ? WHERE name = ? AND id = ?", [$version, $mcversion, $slug, $url, $md5, $mod, $versionId]);
+  }
+
+  public static function deleteModVersion($mod, $versionId): void
+  {
+    Service::getDatabaseService()->prepare("DELETE FROM mods WHERE name = ? AND id = ?", [$mod, $versionId]);
   }
 
 }

@@ -1,0 +1,132 @@
+{% include "dashboard/header.twig" %}
+<div class="main">
+    <script>
+        function remove_box(id,version,name) {
+            $("#mod-name-title").text(name+" "+version);
+            $("#mod-name").text(name+" "+version);
+            $("#remove-button").attr("onclick","remove("+id+")");
+        }
+        function remove(id) {
+            var request = new XMLHttpRequest();
+            request.onreadystatechange = function() {
+                $("#mod-row-"+id).remove();
+                if ($("#table-mods tr").length==0) {
+                    window.location = "./lib-mods";
+                }
+            }
+            request.open("GET", "./functions/delete-modv.php?id="+id);
+            request.send();
+        }
+    </script>
+    <div class="card">
+        <a href="{{ url }}/dashboard/lib/mods" style="width: fit-content;" class="btn btn-primary">
+            <em class="fas fa-arrow-left"></em> Back
+        </a><br />
+        <h2>Versions</h2>
+        <table class="table sortable table-striped">
+            <thead>
+            <tr>
+                <th style="width:20%" data-defaultsort="AZ" scope="col">Version</th>
+                <th style="width:20%" data-defaultsort="AZ" scope="col">Minecraft</th>
+                <th style="width:30%" data-defaultsort="AZ" scope="col">File</th>
+                <th style="width:30%" scope="col"></th>
+            </tr>
+            </thead>
+            <tbody id="table-mods">
+            {% for version in mod['versions'] %}
+
+                <tr id="mod-row-<?php echo $mod['id'] ?>">
+                    <td scope="row">{{ version['version'] }}</td>
+                    <td>{{ version['mcversion'] }}</td>
+                    <td>{{ version['filename'] }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
+                            <button onclick="window.location = '{{ url}}/dashboard/lib/mods/{{ mod['name'] }}/version/{{ version['id'] }}'"
+                                    class="btn btn-primary">Edit</button>
+                            <button onclick="window.location = '{{ version['url'] }}'" class="btn btn-secondary"><em class="fas fa-file-download"></em> .zip</button>
+                            {% if version['filename'] != null %}
+                                <button onclick="window.location = './functions/mod_extract.php?id=<?php echo $mod['id']; ?>'" class="btn btn-secondary"><em class="fas fa-file-download"></em> .jar</button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="modal fade" id="removeMod" tabindex="-1" role="dialog" aria-labelledby="rm" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rm">Delete file <span id="mod-name-title"></span>?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete file <span id="mod-name"></span>?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
+                        <button id="remove-button" type="button" class="btn btn-danger" data-dismiss="modal">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <h2>Details</h2><hr>
+        <form method="POST">
+            <input type="hidden" name="action" value="edit">
+
+
+            <div class="mb-3">
+                <label for="name-input" class="form-label">Mod name</label>
+                <input id="name-input" required class="form-control" type="text" name="pretty_name" placeholder="Mod name" value="{{ mod['pretty_name'] }}" />
+            </div>
+            <div class="mb-3">
+                <label for="description-input">Description</label>
+                <textarea class="form-control" type="text" name="description" id="description-input" placeholder="Mod description">{{ mod['description'] }}</textarea>
+
+            </div>
+            <div class="mb-3">
+                <label for="author-input">Author</label>
+                <input class="form-control" type="text" name="author" id="author-input" placeholder="Mod Author" value="{{ mod['author'] }}">
+            </div>
+
+            <div class="mb-3">
+                <label for="link-input">Mod Website</label>
+                <input class="form-control" type="url" name="link" id="link-input" placeholder="Mod Website" value="{{ mod['link'] }}">
+            </div>
+            <div class="mb-3">
+                <label for="donlink-input">Donation Link</label>
+                <input class="form-control" type="url" name="donlink"  id="donlink-input" placeholder="Author's Website" value="{{ mod['donlink'] }}">
+            </div><br />
+
+            <input type="submit" name="submit" value="Save" class="btn btn-success">
+        </form>
+    </div>
+</div>
+<script type="text/javascript">
+    $("#pn").on("keyup", function(){
+        var slug = slugify($(this).val());
+        console.log(slug);
+        $("#slug").val(slug);
+    });
+    function slugify (str) {
+        str = str.replace(/^\s+|\s+$/g, '');
+        str = str.toLowerCase();
+        var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
+        var to = "aaaaaeeeeiiiioooouuuunc------";
+        for (var i=0, l=from.length ; i<l ; i++) {
+            str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+        }
+        str = str.replace(/[^a-z0-9 -]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+        return str;
+    }
+</script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("#nav-mods").trigger('click');
+    });
+</script>
+{% include "dashboard/footer.twig" %}

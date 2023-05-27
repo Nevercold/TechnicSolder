@@ -2,7 +2,7 @@
 
 <ul class="nav justify-content-end info-versions">
     <li class="nav-item">
-        <a class="nav-link" href="./dashboard"><em class="fas fa-arrow-left fa-lg"></em> {{ modpack['display_name'] }}
+        <a class="nav-link" href="{{ url }}/dashboard"><em class="fas fa-arrow-left fa-lg"></em> {{ modpack['display_name'] }}
         </a>
     </li>
     <li id="latest-v-li" class="nav-item">
@@ -163,78 +163,17 @@
             <div class="btn-group">
                 <button id="create1" type="submit" name="type" value="new" class="btn btn-primary">Create Empty Build
                 </button>
+
+                {% if modpack['builds']|length != 0 %}
                 <button id="create2" type="submit" name="type" value="update" class="btn btn-primary">Update latest
                     version
                 </button>
+                {% endif %}
             </div>
 
         </form>
-        <br/>
-        <h2>Copy Build</h2>
-        <hr>
-        <form action="./functions/copy-build.php" method="">
-            <input hidden type="text" name="id" value="{{ modpack['id'] }}">
-            <select required="" id="mplist" class="form-control">
-                <option value=null>Please select a modpack..</option>
-                {% for modpack in modpacks %}
-                    <option value="{{ modpack['id'] }}">{{ modpack['name'] }}</option>
-                {% endfor %}
-            </select>
-            <br/>
-            <select required="" name='build' id="buildlist" class="form-control">
-                <option value=null>Please select a build..</option>
-            </select>
-            <br/>
-            <input pattern="^[a-zA-Z0-9.-]+$" type="text" name="newname" id="newname" required class="form-control"
-                   placeholder="New Build Name">
-            <span id="warn_newname" style="display: none"
-                  class="text-danger">Build with this name already exists.</span>
-            <br/>
-            <button type="submit" id="copybutton" name="submit" value="copy" class="btn btn-primary">Copy</button>
-        </form>
-        <script type="text/javascript">
-            var builds = "<?php echo addslashes(json_encode($mpab)) ?>";
-            var sbn = "<?php echo addslashes(json_encode($sbn)) ?>";
-            var bd = JSON.parse(builds);
-            var sbna = JSON.parse(sbn);
-            console.log(sbna);
-            $("#mplist").change(function () {
-                $("#buildlist").children().each(function () {
-                    this.remove();
-                });
-                Object.keys(bd).forEach(function (element) {
-
-                    if ($("#mplist").val() == bd[element]['mpid']) {
-                        $("#buildlist").append("<option value='" + bd[element]['id'] + "'>" + bd[element]['mpname'] + " - " + bd[element]['name'] + "</option>")
-                    }
-                });
-            });
-            $("#newbname").on("keyup", function () {
-                if (sbna.indexOf($("#newbname").val()) == false) {
-                    $("#newbname").addClass("is-invalid");
-                    $("#warn_newbname").show();
-                    $("#create1").prop("disabled", true);
-                    $("#create2").prop("disabled", true);
-                } else {
-                    $("#newbname").removeClass("is-invalid");
-                    $("#warn_newbname").hide();
-                    $("#create1").prop("disabled", false);
-                    $("#create2").prop("disabled", false);
-                }
-            });
-            $("#newname").on("keyup", function () {
-                if (sbna.indexOf($("#newname").val()) == false) {
-                    $("#newname").addClass("is-invalid");
-                    $("#warn_newname").show();
-                    $("#copybutton").prop("disabled", true);
-                } else {
-                    $("#newname").removeClass("is-invalid");
-                    $("#warn_newname").hide();
-                    $("#copybutton").prop("disabled", false);
-                }
-            });
-        </script>
     </div>
+    {% if modpack['builds']|length != 0 %}
     <div class="card">
         <h2>Builds</h2>
         <hr>
@@ -315,10 +254,11 @@
                 $("#build-title").text(name);
                 $("#build-text").text(name);
                 $("#remove-button").attr("onclick", "remove(" + id + ")");
-                $("#deleteBuildId").val(name);
+                $("#deleteBuildId").val(id);
             }
         </script>
     </div>
+    {% endif %}
 </div>
 
 {% include "dashboard/footer.twig" %}

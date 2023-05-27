@@ -13,4 +13,4 @@ if(!file_exists( __DIR__ . "/vendor/autoload.php")){
 require __DIR__ . "/vendor/autoload.php";
 $main = new Solder();
 
-$main->getService()->getRoutingService()->createRoutes();
+$main->getService()->getRoutingService();

@@ -1,0 +1,60 @@
+{% include "dashboard/header.twig" %}
+<div class="main">
+    <script>document.title = 'Add Mod - <?php echo addslashes($_SESSION['name']) ?>';</script>
+    <div class="card">
+        <button onclick="window.location = './lib-mods'" style="width: fit-content;" class="btn btn-primary"><em class="fas fa-arrow-left"></em> Back</button><br />
+        <h3>Add Mod</h3>
+        <form method="POST" action="./functions/add-modv.php">
+
+
+            <input id="pn" required class="form-control" type="text" name="pretty_name" placeholder="Mod name" />
+            <br />
+            <input id="slug" required pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$" class="form-control" type="text" name="name" placeholder="Mod slug" /><br />
+            <textarea class="form-control" type="text" name="description" placeholder="Mod description"></textarea><br />
+            <input required class="form-control" type="text" name="version" placeholder="Mod Version"><br />
+            <input class="form-control" type="text" name="author" id="author-input" placeholder="Mod Author">
+            <br />
+            <input class="form-control" type="url" name="link" id="link-input" placeholder="Mod Website">
+            <br />
+            <input class="form-control" type="url" name="donlink"  id="donlink-input" placeholder="Author's Website">
+            <br />
+            <div class="input-group">
+                <input required class="form-control" type="url" name="url" placeholder="File URL (this must be a .zip file with the right structure)">
+                <div class="input-group-append" style="cursor:pointer"><span class="input-group-text" data-toggle="popover" title="Solder .zip structure" data-content='The .zip file must include a "mods" folder, within which you place the .jar or .zip original mod file. For example, if you are including the bibliocraft mod, you must place the bibliocraft.jar (the name of the file is irrelevant) inside a "mods" directory. Then you must zip the mods directory and upload this .zip file to a server. Paste your direct link to this file here.'><em class="fas fa-question-circle"></em></span></div>
+            </div>
+            <br />
+            <input required class="form-control" type="text" name="md5" placeholder="File md5 Hash"><br />
+            <input required class="form-control" required type="text" name="mcversion" placeholder="Minecraft Version"><br />
+            <input type="submit" name="submit" value="Save" class="btn btn-success">
+        </form>
+        <script type="text/javascript">
+            $("#pn").on("keyup", function(){
+                var slug = slugify($(this).val());
+                console.log(slug);
+                $("#slug").val(slug);
+            });
+            function slugify (str) {
+                str = str.replace(/^\s+|\s+$/g, '');
+                str = str.toLowerCase();
+                var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
+                var to = "aaaaaeeeeiiiioooouuuunc------";
+                for (var i=0, l=from.length ; i<l ; i++) {
+                    str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+                }
+                str = str.replace(/[^a-z0-9 -]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-');
+                return str;
+            }
+        </script>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("#nav-mods").trigger('click');
+        $(function () {
+            $('[data-toggle="popover"]').popover()
+        })
+    });
+</script>
+{% include "dashboard/footer.twig" %}

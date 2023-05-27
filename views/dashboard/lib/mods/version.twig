@@ -1,0 +1,97 @@
+{% include "dashboard/header.twig" %}
+<div class="main">
+    <div class="card">
+        <a href="{{ url }}/dashboard/lib/mods/{{ mod['name'] }}" style="width: fit-content;"
+                class="btn btn-primary">
+            <em class="fas fa-arrow-left"></em> Back
+        </a>
+        <br/>
+        <h3>Edit {{ mod['pretty_name'] }} - {{ mod['version'] }}</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="edit">
+
+            <script type="text/javascript">
+                $("#pn").on("keyup", function () {
+                    var slug = slugify($(this).val());
+                    console.log(slug);
+                    $("#slug").val(slug);
+                });
+
+                function slugify(str) {
+                    str = str.replace(/^\s+|\s+$/g, '');
+                    str = str.toLowerCase();
+                    var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
+                    var to = "aaaaaeeeeiiiioooouuuunc------";
+                    for (var i = 0, l = from.length; i < l; i++) {
+                        str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+                    }
+                    str = str.replace(/[^a-z0-9 -]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-');
+                    return str;
+                }
+            </script>
+
+
+            <div class="mb-3">
+                <label for="version" class="form-label">Version</label>
+                <input required class="form-control" type="text" name="version" id="version" placeholder="Mod Version"
+                       value="{{ mod['version'] }}">
+            </div>
+            <div class="mb-3">
+                <label for="slug" class="form-label">Slug</label>
+                <input id="slug" required pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$" class="form-control" type="text"
+                       name="slug" placeholder="Mod slug" value="{{ mod['name'] }}"/>
+            </div>
+            <div class="mb-3">
+                <label for="url" class="form-label">FileURL</label>
+                <input class="form-control" type="url" name="url" id="url"
+                        {% if mod['url'] is not empty %}
+                            placeholder="File URL" value="{{ mod['url'] }}" required
+                        {% else %}
+                            disabled placeholder="File URL (This is a local mod)"
+                        {% endif %}
+                >
+            </div>
+            <div class="mb-3">
+                <label for="md5" id="md5">MD5</label>
+                <input required class="form-control" type="text" name="md5" id="md5" placeholder="File md5 Hash"
+                       value="{{ mod['md5'] }}">
+            </div>
+            <div class="mb-3">
+                <label for="mcversion" class="form-label">MC-Version</label>
+                <input required class="form-control" id="mcversion" type="text" name="mcversion"
+                       placeholder="Minecraft Version" value="{{ mod['mcversion'] }}">
+            </div>
+            <button type="submit" name="submit" value="Save" class="btn btn-success">Save</button>
+        </form>
+
+        <form method="POST" class="mt-4">
+            <input type="hidden" name="action" value="edit">
+            <button data-toggle="modal" data-target="#removeMod" type="button" class="btn btn-danger">Remove</button>
+            <div class="modal fade" id="removeMod" tabindex="-1" role="dialog" aria-labelledby="rm" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="rm">Delete mod <span id="mod-name-title"></span>?</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete mod <span id="mod-name"></span>? All the mod's files and
+                            versions will be deleted too.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
+                            <button id="remove-button" type="submit" class="btn btn-danger">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% include "dashboard/footer.twig" %}

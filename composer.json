@@ -3,7 +3,8 @@
     "the-systems/route": "*",
     "twig/twig": "3.4.*",
     "cache/cache": "dev-master",
-    "ext-zip": "*"
+    "ext-zip": "*",
+    "ext-curl": "*"
   },
   "repositories": [
     {
@@ -13,7 +14,8 @@
   ],
   "autoload": {
     "psr-4": {
-      "Solder\\": "src/solder"
+      "Solder\\": "src/solder",
+      "theSystems\\": "src/theSystems/"
     }
   }
 }

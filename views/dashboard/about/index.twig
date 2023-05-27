@@ -1,0 +1,46 @@
+{% include "dashboard/header.twig" %}
+<div class="main">
+    <div class="card">
+        <center>
+            <h1 class="display-4">About The<span class="text-muted">Solder</span></h1>
+        </center>
+        <hr>
+        <blockquote class="blockquote">
+            TechnicSolder is an API that sits between a modpack repository and the TechnicLauncher. It
+            allows you to easily manage multiple modpacks in one single location.
+            <br><br>
+            Using Solder also means your packs will download each mod individually. This means the launcher
+            can check MD5's against each version of a mod and if it hasn't changed, use the cached version
+            of the mod instead. What does this mean? Small incremental updates to your modpack doesn't mean
+            redownloading the whole thing every time!
+            <br><br>
+            Solder also interfaces with the Technic Platform using an API key you can generate through your
+            account. When Solder has this key it can directly interact with your Platform account. When
+            creating new modpacks you will be able to import any packs you have registered in your Solder
+            install. It will also create detailed mod lists on your Platform page!
+            <footer class="blockquote-footer">
+                <a href="https://github.com/TechnicPack/TechnicSolder">Technic</a>
+            </footer>
+        </blockquote>
+        <hr>
+        <p>
+            TechnicSolder was originally developed by <a href="https://github.com/TechnicPack">Technic</a>
+            using the Laravel Framework. However, the application is difficult to install and use.
+            <a href="https://github.com/TheGameSpider/TechnicSolder">Technic Solder - Solder.cf</a> was a new development for easier use and installation. However, Solder.cf was no longer developed and updated.
+            TheSolder is a new development of Solder.cf with the same design.
+        </p>
+        <p>Read the licence before redistributing.</p>
+        <div class="card text-white bg-info mb3" style="padding:0">
+            <div class="card-header">License</div>
+            <div class="card-body">
+                <p class="card-text">{{ license|raw }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("#nav-settings").trigger('click');
+    });
+</script>
+{% include "dashboard/footer.twig" %}

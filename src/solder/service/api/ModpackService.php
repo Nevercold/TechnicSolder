@@ -9,6 +9,7 @@ use Solder\service\config\ConfigService;
 use Solder\service\database\DatabaseService;
 use Solder\service\Service;
 use Solder\service\TechnicPackService;
+use Solder\Solder;
 use ZipArchive;
 
 class ModpackService
@@ -440,15 +441,16 @@ class ModpackService
     if($result) {
       $result = json_decode($result, true);
 
-      $modInfo['name'] = $result[0]['modid'];
-      $modInfo['pretty_name'] = $result[0]['name'];
+      $modInfo['name'] = $result[0]['modid'] ?? "newMod";
+      $modInfo['pretty_name'] = $result[0]['name'] ?? "Mod Name";
       $modInfo['author'] = implode(",", $result[0]['authorList']);
       $modInfo['link'] = $result[0]['url'];
       $modInfo['donlink'] = $result[0]['updateUrl'];
-      $modInfo['version'] = $result[0]['version'];
-      $modInfo['mcversion'] = $result[0]['mcversion'];
+      $modInfo['version'] = $result[0]['version'] ?? "0";
+      $modInfo['mcversion'] = $result[0]['mcversion'] ?? "0";
       $modInfo['description'] = $result[0]['description'];
 
+      return $modInfo;
     }
 
     throw new UploadException("No mcmod.info found");
@@ -463,11 +465,11 @@ class ModpackService
     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
     if(!$fileTmpName) {
-      throw new UploadException("File is too big! Check your post_max_size (current value ".ini_get('post_max_size').") and upload_max_filesize (current value ".ini_get('upload_max_filesize').") values in ".php_ini_loaded_file());
+      return ["status" => "error", "message" => "File is too big! Check your post_max_size (current value ".ini_get('post_max_size').") and upload_max_filesize (current value ".ini_get('upload_max_filesize').") values in ".php_ini_loaded_file()];
     }
 
-    if(!in_array($fileExtension, ["jar", "zip"])) {
-      throw new UploadException("File extension not allowed");
+    if(!in_array($fileExtension, ["jar"])) {
+      return ["status" => "error", "message" => "File extension not allowed (only jar)"];
     }
 
     $fileSlug = self::slugify(pathinfo($fileName, PATHINFO_FILENAME));
@@ -475,47 +477,50 @@ class ModpackService
 
 
     $modInfo = self::getModInfo($fileTmpName);
+    $modDirectory = modsDir.$modInfo['name'];
+    $modCache = Solder::getPath()."/cache";
+    $tempZip = $modCache."/".uniqid().".zip";
+    $modFileName = $fileShortName."-".$modInfo['mcversion']."-".$modInfo['mcversion'];
 
-    if(!file_exists(modsDir."/".$modInfo['name'])) {
-      mkdir(modsDir."/".$modInfo['name']);
+    if(!file_exists($modDirectory)) {
+      mkdir($modDirectory);
     }
 
-    $mcmod = [];
+    $zip = new ZipArchive();
+    if ($zip->open($tempZip, ZIPARCHIVE::CREATE) !== TRUE) {
+      return ["status" => "error", "message" => "Could not create archive"];
+    }
+    $zip->addEmptyDir('mods');
+    $zip->addFile($fileTmpName, "mods/".$modFileName.".jar") or throw new UploadException("Could not add file to archive");
+    $zip->close();
 
 
-    $result = @file_get_contents("zip://".realpath($fileTmpName)."#META-INF/mods.toml");
-    if (!$result) {
-      # fail 1.14+ or fabric mod check
-      $result = file_get_contents("zip://".realpath($fileTmpName)."#mcmod.info");
-      if (!$result) {
-        // nothing
-      } elseif (file_get_contents("zip://".realpath($fileTmpName."/mods-".$fileName."/".$fileName)."#fabric.mod.json")) {
-        # is a fabric mod
-        $result = file_get_contents("zip://" . realpath(modsDir."/mods-" . $fileName . "/" . $fileName) . "#fabric.mod.json");
-        $q = json_decode(preg_replace('/\r|\n/', '', trim($result)), true);
-        $mcmod = $q;
-        $mcmod["modid"] = $mcmod["id"];
-        $mcmod["url"] = $mcmod["contact"]["sources"];
-      } else {
-        # is legacy mod
-        $mcmod = json_decode(preg_replace('/\r|\n/','',trim($result)),true)[0];
-      }
-    } else { # is 1.14+ mod
-      $mcmod = parseToml($result);
+    if(file_exists($modDirectory."/".$modFileName.".zip")) {
+      return ["status" => "error", "message" => "Mod already exists"];
+    }
+    if(!rename($tempZip, $modDirectory."/".$modFileName.".zip")){
+      return ["status" => "error", "message" => "Could not move file"];
     }
 
 
-
-    $fileInfo = [];
-    if (!file_exists(modsDir."/mods-".$fileNameShort)) {
-      mkdir(modsDir."/mods-".$fileNameShort);
+    $statement = Service::getDatabaseService()->prepare("SELECT * FROM mods WHERE name = ?", [$modInfo['name']]);
+    if($statement->rowCount() == 0){
+      Service::getDatabaseService()->prepare("INSERT INTO mods (name, pretty_name, author, description, link, donlink, version, mcversion, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", [$modInfo['name'], $modInfo['pretty_name'], $modInfo['author'], $modInfo['description'], $modInfo['link'], $modInfo['donlink'], $modInfo['version'], $modInfo['mcversion'], ModType::MOD->value]);
     } else {
-      echo '{"status":"error","message":"Folder mods-'.$fileNameShort.' already exists!"}';
-      exit();
+      $row = $statement->fetch();
+      Service::getDatabaseService()->prepare("INSERT INTO mods (name, pretty_name, author, description, link, donlink, version, mcversion, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", [$modInfo['name'], $row['pretty_name'], $row['author'], $row['description'], $row['link'], $row['donlink'], $modInfo['version'], $modInfo['mcversion'], ModType::MOD->value]);
     }
+    $id = Service::getDatabaseService()->lastInsertId();
 
 
 
+    $md5 = md5_file($modDirectory."/".$modFileName.".zip");
+    $url = ConfigService::getWebUrl()."/mods/".$modInfo['name']."/".$modFileName.".zip";
+
+
+    Service::getDatabaseService()->prepare("Update mods SET md5 = ?, url = ?, filename = ? WHERE id = ?", [$md5, $url, $modFileName.".zip", $id]);
+
+    return ["status" => "success", "message" => "Mod uploaded successfully"];
   }
 
 

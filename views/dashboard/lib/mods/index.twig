@@ -1,0 +1,242 @@
+{% include "dashboard/header.twig" %}
+<div class="main">
+    <div id="upload-card" class="card">
+        <h2>Upload mods</h2>
+        <div class="card-img-bottom">
+            <form id="modsform" enctype="multipart/form-data">
+                <div class="upload-mods">
+                    <center>
+                        <div>
+                            Drag n' Drop .jar files here.
+                            <br />
+                            <em class='fas fa-upload fa-4x'></em>
+                        </div>
+                    </center>
+                    <input type="file" name="files" multiple/>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <p class="ml-3"><a href="./add-mods"><em class="fas fa-plus-circle"></em> Add remote mods</a></p>
+    <div style="display: none" id="u-mods" class="card">
+        <h2>New Mods</h2>
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="width:25%" scope="col">Mod</th>
+                <th scope="col">Status</th>
+            </tr>
+            </thead>
+            <tbody id="table-mods">
+
+            </tbody>
+        </table>
+        <button id="btn-done" disabled class="btn btn-success btn-block" onclick="window.location.reload();">Done</button>
+    </div>
+    <div class="card">
+        <h2>Available Mods</h2>
+        <hr>
+        <input placeholder="Search..." type="text" id="search" class="form-control"><br />
+        <table id="modstable" class="table table-striped table-responsive sortable">
+            <thead>
+            <tr>
+                <th style="width:30%" scope="col" data-defaultsign="AZ">Mod name</th>
+                <th style="width:30%" scope="col" data-defaultsign="AZ">Author</td>
+                <th style="width:10%" scope="col" data-defaultsign="_19">Versions</td>
+                <th style="width:30%" scope="col" data-defaultsort="disabled"></th>
+            </tr>
+            </thead>
+
+            <tr id="mod-row-example">
+                <td scope="row" class="name"></td>
+                <td class="author" ></td>
+                <td class="count"></td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
+                        <button class="btn btn-primary edit">Edit</button>
+                    </div>
+                </td>
+            </tr>
+
+            <tbody id="all-mods">
+
+            </tbody>
+        </table>
+        <script type="text/javascript">
+
+            exampleMod =  document.getElementById("mod-row-example");
+            modsBody = document.getElementById("all-mods");
+
+            window.onload = function () {
+                getAllMods();
+            }
+
+            function addMod(mod) {
+                console.log(mod);
+                const clone = exampleMod.cloneNode(true);
+
+                clone.id = 'mod-row-' + mod.name;
+                clone.removeAttribute('style');
+
+                clone.querySelector('.name').innerText = mod.pretty_name;
+                clone.querySelector('.author').innerText = mod.author.name;
+
+
+                clone.querySelector('.count').innerText = mod.versions.length;
+
+                clone.querySelector('.edit').onclick = function () {
+                    window.location.href = "{{ url }}/dashboard/lib/mods/"+mod.name;
+                }
+
+                modsBody.appendChild(clone);
+                resortMods();
+            }
+
+            function getAllMods() {
+                modsBody.innerHTML = '';
+                data = {}
+
+
+                $.ajax({
+                    url: '/api/mods',
+                    type: 'GET',
+                    data: data
+                }).done(function (data) {
+                    for (var mod in data) {
+                        mod = data[mod];
+
+                        addMod(mod);
+                    }
+                });
+            }
+
+            function resortMods(){
+                tr = document.getElementById("modstable").getElementsByTagName("tr");
+
+                for (var i = 0; i < tr.length; i++) {
+                    if (tr[i].id === "mod-row-example") continue;
+
+                    td = tr[i].getElementsByTagName("td")[0];
+                    if (td) {
+
+                        console.log(td);
+                        console.log(td.innerHTML.toUpperCase())
+                        if (td.innerHTML.toUpperCase().indexOf($("#search").val().toUpperCase()) > -1) {
+                            tr[i].style.display = "";
+                        } else {
+                            tr[i].style.display = "none";
+                        }
+                    }
+                }
+            }
+
+            $("#search").on('keyup',resortMods);
+        </script>
+    </div>
+</div>
+
+<script type="text/javascript">
+    mn = 1;
+    function sendFile(file, i) {
+        var formData = new FormData();
+        var request = new XMLHttpRequest();
+        formData.set('files', file);
+        request.open('POST', '/api/dash/lib/mods/upload');
+        request.upload.addEventListener("progress", function(evt) {
+            if (evt.lengthComputable) {
+                var percentage = evt.loaded / evt.total * 100;
+                $("#" + i).attr('aria-valuenow', percentage + '%');
+                $("#" + i).css('width', percentage + '%');
+                request.onreadystatechange = function() {
+                    if (request.readyState == 4) {
+                        if (request.status == 200) {
+                            if ( mn == modcount ) {
+                                $("#btn-done").attr("disabled",false);
+                            } else {
+                                mn = mn + 1;
+                            }
+                            console.log(request.response);
+                            var response = JSON.parse(request.response);
+                            switch(response.status) {
+                                case "succ":
+                                {
+                                    $("#cog-" + i).hide();
+                                    $("#check-" + i).show();
+                                    $("#" + i).removeClass("progress-bar-striped progress-bar-animated");
+                                    $("#" + i).addClass("bg-success");
+                                    $("#info-" + i).text(response.message);
+                                    $("#" + i).attr("id", i + "-done");
+                                    break;
+                                }
+                                case "error":
+                                {
+                                    $("#cog-" + i).hide();
+                                    $("#times-" + i).show();
+                                    $("#" + i).removeClass("progress-bar-striped progress-bar-animated");
+                                    $("#" + i).addClass("bg-danger");
+                                    $("#info-" + i).text(response.message);
+                                    $("#" + i).attr("id", i + "-done");
+                                    break;
+                                }
+                                case "warn":
+                                {
+                                    $("#cog-" + i).hide();
+                                    $("#exc-" + i).show();
+                                    $("#" + i).removeClass("progress-bar-striped progress-bar-animated");
+                                    $("#" + i).addClass("bg-warning");
+                                    $("#info-" + i).text(response.message);
+                                    $("#" + i).attr("id", i + "-done");
+                                    break;
+                                }
+                                case "info":
+                                {
+                                    $("#cog-" + i).hide();
+                                    $("#inf-" + i).show();
+                                    $("#" + i).removeClass("progress-bar-striped progress-bar-animated");
+                                    $("#" + i).addClass("bg-success");
+                                    $("#info-" + i).text(response.message);
+                                    $("#" + i).attr("id", i + "-done");
+                                    break;
+                                }
+                            }
+                        } else {
+                            $("#cog-" + i).hide();
+                            $("#times-" + i).show();
+                            $("#" + i).removeClass("progress-bar-striped progress-bar-animated");
+                            $("#" + i).addClass("bg-danger");
+                            $("#info-" + i).text("An error occured: " + request.status);
+                            $("#" + i).attr("id", i + "-done");
+                        }
+                    }
+                }
+            }
+        }, false);
+        request.send(formData);
+    }
+
+    function showFile(file, i) {
+        $("#table-mods").append('<tr><td scope="row">' + file.name + '</td> <td><em id="cog-' + i + '" class="fas fa-cog fa-spin"></em><em id="check-' + i + '" style="display:none" class="text-success fas fa-check"></em><em id="times-' + i + '" style="display:none" class="text-danger fas fa-times"></em><em id="exc-' + i + '" style="display:none" class="text-warning fas fa-exclamation"></em><em id="inf-' + i + '" style="display:none" class="text-info fas fa-info"></em> <small class="text-muted" id="info-' + i + '"></small></h4><div class="progress"><div id="' + i + '" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div></div></td></tr>');
+    }
+    $(document).ready(function() {
+        $(':file').change(function() {
+            $("#upload-card").hide();
+            $("#u-mods").show();
+            modcount = this.files.length;
+            for (var i = 0; i < this.files.length; i++) {
+                var file = this.files[i];
+                showFile(file, i);
+            }
+            for (var i = 0; i < this.files.length; i++) {
+                var file = this.files[i];
+                sendFile(file, i);
+            }
+        });
+    });
+</script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("#nav-mods").trigger('click');
+    });
+</script>
+{% include "dashboard/footer.twig" %}

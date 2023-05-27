@@ -1,0 +1,57 @@
+/* HMCSW.de - HMCSW
+   Author: HMCSW
+   Version: 1.0.0
+   File Description:
+*/
+@import url(/resources/hmcsw/fonts/nunito.css);
+p,b {
+    font-family: 'Nunito Sans';
+}
+h3,h4,h5 {
+    font-family: 'Nunito Sans';
+}
+
+.font-weight-bold {
+    font-weight: bold;
+}
+
+.card-custom {
+    border-radius: calc(20px - 1px);
+    border: 0;
+    -webkit-box-shadow: 0px 0px 19px 6px rgba(0,0,0,0.36);
+    box-shadow: 1px 7px 29px -1px rgba(0,0,0,0.17);
+}
+
+.cc-title {
+
+
+}
+
+.non-shadow {
+    box-shadow: none;
+}
+
+.badge {
+    font-family: 'Nunito Sans';
+    border-radius: 9px;
+    padding: .65em .75em;
+}
+
+.bg-secondary {
+    background-color: #979797; !important;
+}
+
+.opacity-1 {
+    opacity: 0.1;
+}
+
+.display-1 {
+    width: 440px;
+}
+
+.top-035 {
+    top: -3.5rem!important
+}
+.end-035 {
+    right: -3.5rem!important;
+}
