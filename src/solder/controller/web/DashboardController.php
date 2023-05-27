@@ -71,10 +71,33 @@ class DashboardController implements RouteInterface
       DashboardController::render($routingService, "dashboard/lib/mods/index.twig", []);
     });
     $routingService->getRouter()->get_post("/dashboard/lib/mods/?", function ($mod) use ($routingService) {
+      if(isset($_POST['action'])){
+        if($_POST['action'] == "edit"){
+          ModpackService::editMod($mod, $_POST['pretty_name'], $_POST['description'], $_POST['author'], $_POST['link'], $_POST['donlink']);
+        }
+
+        header("Location: /dashboard/lib/mods/" . $mod);
+        die();
+      }
 
       $mod = ModpackService::getMod($mod);
 
       DashboardController::render($routingService, "dashboard/lib/mods/mod.twig", ["mod" => $mod]);
+    });
+    $routingService->getRouter()->get_post("/dashboard/lib/mods/?/version/?", function ($mod, $versionId) use ($routingService) {
+      if(isset($_POST['action'])){
+        if($_POST['action'] == "edit"){
+          ModpackService::editModVersion($mod, $versionId, $_POST['version'], $_POST['mcversion'], $_POST['slug'], $_POST['url'], $_POST['md5']);
+        }
+
+        header("Location: /dashboard/lib/mods/" . $_POST['slug']."/version/".$versionId);
+        die();
+      }
+
+      $mod = ModpackService::getModVersion($mod, $versionId);
+
+
+      DashboardController::render($routingService, "dashboard/lib/mods/version.twig", ["mod" => $mod]);
     });
   }
 

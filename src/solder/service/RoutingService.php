@@ -56,7 +56,12 @@ class RoutingService
         $route->createRoutes($this);
       }
     }
-    $this->getRouter()->end();
+
+    try {
+      $this->getRouter()->end();
+    } catch (\Exception $e) {
+      ApiService::manageResponse(["success" => false, "response" => ["error_message" => $e->getMessage(), "error_code" => $e->getCode()]]);
+    }
 
   }
 

@@ -2,7 +2,8 @@
   "require": {
     "the-systems/route": "*",
     "twig/twig": "3.4.*",
-    "cache/cache": "dev-master"
+    "cache/cache": "dev-master",
+    "ext-zip": "*"
   },
   "repositories": [
     {

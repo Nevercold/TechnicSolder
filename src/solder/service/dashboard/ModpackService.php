@@ -271,6 +271,10 @@ class ModpackService
         "filename" => $row['filename'],
         "md5" => $row['md5'],
         "description" => $row['description'],
+
+        "author" => $row['author'],
+        "donlink" => $row['donlink'],
+        "link" => $row['link'],
       ];
     }
 
@@ -278,9 +282,45 @@ class ModpackService
       "pretty_name" => $versions[0]['pretty_name'],
       "name" => $versions[0]['name'],
       "description" => $versions[0]['description'],
+      "author" => $versions[0]['author'],
+      "donlink" => $versions[0]['donlink'],
+      "link" => $versions[0]['link'],
+
       "versions" => $versions,
     ];
 
+  }
+
+  public static function getModVersion(string $mod, int $id): array
+  {
+    $statement = Service::getDatabaseService()->prepare("SELECT * FROM mods WHERE name = ? AND id = ?", [$mod, $id]);
+    if ($statement->rowCount() === 0) {
+      throw new NotFoundException("Mod not found");
+    }
+
+    $row = $statement->fetch();
+
+    return [
+      "id" => $row['id'],
+      "pretty_name" => $row['pretty_name'],
+      "name" => $row['name'],
+      "version" => $row['version'],
+      "mcversion" => $row['mcversion'],
+      "url" => $row['url'],
+      "filename" => $row['filename'],
+      "md5" => $row['md5'],
+      "description" => $row['description'],
+    ];
+  }
+
+  public static function editMod($mod, string $pretty_name, string $description, string $author, string $link, string $donlink): void
+  {
+    Service::getDatabaseService()->prepare("UPDATE mods SET pretty_name = ?, description = ?, author = ?, link = ?, donlink = ? WHERE name = ?", [$pretty_name, $description, $author, $link, $donlink, $mod]);
+  }
+
+  public static function editModVersion($mod, int $versionId, mixed $version, mixed $mcversion, mixed $slug, mixed $url, mixed $md5): void
+  {
+    Service::getDatabaseService()->prepare("UPDATE mods SET version = ?, mcversion = ?, filename = ?, url = ?, md5 = ? WHERE name = ? AND id = ?", [$version, $mcversion, $slug, $url, $md5, $mod, $versionId]);
   }
 
 }
