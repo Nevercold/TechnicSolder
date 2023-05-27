@@ -1,2 +1,4 @@
+
+RewriteEngine off
 Options -Indexes
 ErrorDocument 403 /403.html

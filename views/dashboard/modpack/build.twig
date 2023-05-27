@@ -1,0 +1,388 @@
+{% include "dashboard/header.twig" %}
+
+<ul class="nav justify-content-end info-versions">
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url }}/dashboard/modpack/{{ modpack['id'] }}"><em class="fas fa-arrow-left fa-lg"></em> {{ modpack['display_name'] }}
+        </a>
+    </li>
+    <div style="width:30px"></div>
+</ul>
+<div class="main">
+    <div class="card">
+        <h2>Build {{ build['name'] }}</h2>
+        <hr>
+        <form method="POST">
+            <input type="hidden" name="action" value="edit">
+
+
+            <label for="buildName">Build-Name</label>
+            <input class="form-control" type="text" id="buildName" name="buildName" value="{{ build['name'] }}" >
+            <br/>
+            <label for="versions">Select minecraft version</label>
+            <select id="versions" name="version" class="form-control">
+                {% for forge in forges %}
+                    <option {% if build['forge']['id'] == forge['id'] %}selected{% endif %}
+                            value="{{ forge['id'] }}">{{ forge['mcversion'] }} - Forge {{ forge['version'] }}</option>
+                {% endfor %}
+            </select>
+            <br/>
+            <label for="java">Select java version</label>
+            <select name="java" class="form-control">
+                {% for version in java %}
+                    <option {% if build['java'] == version %}selected{% endif %}
+                            value="{{ version }}">{{ version }}</option>
+                {% endfor %}
+            </select> <br/>
+            <label for="memory">Memory (RAM in MB)</label>
+            <input class="form-control" type="number" id="memory" name="memory" value="{{ build['memory'] }}" min="1024"
+                   max="65536" placeholder="2048" step="512">
+            <br/>
+            <div class="custom-control custom-checkbox">
+                <input {% if build['public'] %}checked{% endif %} type="checkbox" name="public"
+                       class="custom-control-input" id="public">
+                <label class="custom-control-label" for="public">Public Build</label>
+            </div>
+            <br/>
+            <div style='display:none' id="wipewarn" class='text-danger'>Build will be wiped.</div>
+            <button type="submit" id="submit-button" class="btn btn-success">Save and Refresh</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Mods in Build {{ build['name'] }}</h2>
+        <table class="table table-striped sortable">
+            <thead>
+            <tr>
+                <th scope="col" style="width: 40%" data-defaultsign="AZ">Mod Name</th>
+                <th scope="col" style="width: 30%" data-defaultsort="disabled">Version</th>
+                <th scope="col" style="width: 15%" data-defaultsort="disabled"></th>
+                <th scope="col" style="width: 15%" data-defaultsort="disabled"></th>
+            </tr>
+            </thead>
+            <tr id="installedMod-add-row-example" data-modName style="display: none">
+                <td scope="row" class="mod-name">
+                    {% if mod['versionMismatch'] %}
+                        <span id="warn-incompatible-{{ mod['name'] }}">(For Minecraft {{ mod['mcversion'] }} - May not be compatible!)</span>
+                    {% endif %}
+
+                </td>
+                <td>
+                    <select class="form-control versions">
+
+                    </select>
+                </td>
+                <td>
+                    <button
+                            class="btn btn-danger remove-btn">
+                        <em class="fas fa-times"></em>
+                    </button>
+                </td>
+            </tr>
+            <tbody id="installedMods-body">
+
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Mods</h2>
+        <hr>
+        <button id="modsRefresh" class="btn btn-primary">Refresh</button>
+        <br/>
+        <input id="search" type="text" placeholder="Search..." class="form-control">
+        <br/>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" name="showall"
+                   class="custom-control-input" id="showall">
+            <label class="custom-control-label" for="showall">Show all</label>
+        </div>
+        <br/>
+        <table id="modstable" class="table table-striped sortable">
+            <thead>
+            <tr>
+                <th scope="col" style="width: 40%" data-defaultsign="AZ">Mod Name</th>
+                <th scope="col" style="width: 25%" data-defaultsign="_19">Version</th>
+                <th scope="col" style="width: 30%" data-defaultsort="disabled"></th>
+                <th scope="col" style="width: 5%" data-defaultsort="disabled"></th>
+            </tr>
+            </thead>
+            <tbody id="mods-body">
+            <tr id="mod-add-row-example" style="display: none" data-modName>
+                <td scope="row" class="mod-name"></td>
+                <td>
+                    <select class="form-control versions" name="version">
+
+                    </select>
+                </td>
+                <td>
+                    <button
+                            class="btn btn-primary add-btn">Add to Build
+                    </button>
+                </td>
+                <td><em id="cog-<?php echo $mod['name'] ?>" style="display:none"
+                        class="fas fa-cog fa-spin fa-2x"></em><em
+                            style="display:none"
+                            class="text-success fas fa-check fa-2x"></em></td>
+            </tr>
+            <script type="text/javascript">
+                $("#search").on('keyup', resortMods);
+
+                function resortMods() {
+                    tr = document.getElementById("modstable").getElementsByTagName("tr");
+
+                    for (var i = 0; i < tr.length; i++) {
+                        if (tr[i] === exampleMod) {
+                            continue;
+                        }
+
+
+                        td = tr[i].getElementsByTagName("td")[0];
+                        if (td) {
+                            if (td.innerHTML.toUpperCase().indexOf($("#search").val().toUpperCase()) > -1) {
+                                tr[i].style.display = "";
+                            } else {
+                                tr[i].style.display = "none";
+                            }
+                        }
+                    }
+                }
+
+                $("#search2").on('keyup', function () {
+                    tr = document.getElementById("filestable").getElementsByTagName("tr");
+
+                    for (var i = 0; i < tr.length; i++) {
+
+                        td = tr[i].getElementsByTagName("td")[0];
+                        if (td) {
+
+                            console.log(td);
+                            console.log(td.innerHTML.toUpperCase())
+                            if (td.innerHTML.toUpperCase().indexOf($("#search").val().toUpperCase()) > -1) {
+                                tr[i].style.display = "";
+                            } else {
+                                tr[i].style.display = "none";
+                            }
+                        }
+                    }
+                });
+            </script>
+            </tbody>
+        </table>
+    </div>
+
+
+    <script type="text/javascript">
+
+        function remove(mod) {
+            $.ajax({
+                url: '/api/dash/modpack/{{ modpack['id'] }}/build/{{ build['id'] }}/mods/' + mod.getAttribute('data-modName'),
+                type: 'DELETE',
+                data: {
+                    mod: mod.getAttribute('data-modName')
+                },
+            }).done(function (data) {
+                mod.remove()
+            });
+        }
+
+        function add(mod, id) {
+            $.ajax({
+                url: '/api/dash/modpack/{{ modpack['id'] }}/build/{{ build['id'] }}',
+                type: 'POST',
+                data: {
+                    mod: id
+                },
+            }).done(function (data) {
+                mod.remove()
+            });
+        }
+
+        window.onload = function () {
+            getAllMods();
+            getAllInstalledMods()
+
+            document.getElementById('modsRefresh').onclick = function () {
+                getAllMods();
+            }
+        }
+        var exampleMod = document.getElementById('mod-add-row-example');
+        var modsBody = document.getElementById('mods-body');
+
+        var installedExampleMod = document.getElementById('installedMod-add-row-example');
+        var installedModsBody = document.getElementById('installedMods-body');
+
+        async function getAllInstalledMods() {
+            await $.ajax({
+                url: '/api/dash/modpack/{{ modpack["id"] }}/build/{{ build["id"] }}/mods',
+                type: 'GET',
+            }).done(function (data) {
+                for (var mod in data) {
+                    mod = data[mod];
+                    dddInstalledMod(mod, mod.id)
+                }
+            })
+        }
+
+        function dddInstalledMod(mod, id) {
+            const clone = installedExampleMod.cloneNode(true);
+
+            clone.id = 'mod-add-row-' + mod.name;
+            clone.removeAttribute('style');
+
+            clone.querySelector('.mod-name').innerText = mod.pretty_name;
+
+            for (var version in mod.versions) {
+                version = mod.versions[version];
+                const option = document.createElement('option');
+                option.value = version.id;
+                option.innerText = version.version + ' (' + version.mcversion + ')';
+
+                console.log(version.id, id)
+
+                if (version.id === parseInt(id)) {
+                    option.selected = true;
+                }
+
+                clone.querySelector('.versions').appendChild(option);
+            }
+
+            clone.setAttribute('data-modName', id);
+
+            clone.querySelector(".remove-btn").addEventListener('click', function () {
+                remove(clone)
+                addMod(mod)
+            });
+
+            clone.querySelector(".versions").addEventListener('change', function () {
+                $.ajax({
+                    url: '/api/dash/modpack/{{ modpack['id'] }}/build/{{ build['id'] }}/mods/' + id + '/' + clone.querySelector('.versions').value,
+                    type: 'PUT'
+                }).done(function (data) {
+                    console.log(data)
+                });
+            });
+
+            installedModsBody.appendChild(clone);
+            resortMods();
+        }
+
+        function addMod(mod) {
+            const clone = exampleMod.cloneNode(true);
+
+            clone.id = 'mod-add-row-' + mod.name;
+            clone.removeAttribute('style');
+
+            clone.querySelector('.mod-name').innerText = mod.pretty_name;
+
+            for (var version in mod.versions) {
+                version = mod.versions[version];
+                const option = document.createElement('option');
+                option.value = version.id;
+                option.innerText = version.version + ' (' + version.mcversion + ')';
+                clone.querySelector('.versions').appendChild(option);
+            }
+
+            clone.setAttribute('data-modName', mod.name);
+
+            clone.querySelector(".add-btn").addEventListener('click', function () {
+                add(clone, clone.querySelector('.versions').value)
+                dddInstalledMod(mod, clone.querySelector('.versions').value)
+            });
+
+
+            modsBody.appendChild(clone);
+            resortMods();
+        }
+
+        function getAllMods() {
+            modsBody.innerHTML = '';
+            data = {}
+
+            if (document.getElementById('showall').checked) {
+                data.mcversion = '{{ build['mcversion'] }}';
+            }
+
+            $.ajax({
+                url: '/api/mods',
+                type: 'GET',
+                data: data
+            }).done(function (data) {
+                for (var mod in data) {
+                    mod = data[mod];
+
+                    addMod(mod);
+                }
+            });
+        }
+
+        $('#showall').change(function () {
+            getAllMods();
+        });
+    </script>
+
+    <div class="card">
+        <h2>Other Files</h2>
+        <hr>
+        <input id="search" type="text" placeholder="Search..." class="form-control">
+        <table class="table table-striped sortable">
+            <thead>
+            <tr>
+                <th scope="col" style="width: 40%" data-defaultsign="AZ">File Name</th>
+                <th scope="col" style="width: 30%" data-defaultsort="disabled"></th>
+                <th scope="col" style="width: 5%" data-defaultsort="disabled"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php
+                            $mres = mysqli_query($conn, "SELECT * FROM `mods` WHERE `type` = 'other'");
+                            if (mysqli_num_rows($mres)!==0) {
+                                ?>
+            <script type="text/javascript">
+                function add_o(id) {
+                    $("#btn-add-o-" + id).attr("disabled", true);
+                    $("#cog-o-" + id).show();
+                    var request = new XMLHttpRequest();
+                    request.onreadystatechange = function () {
+                        if (this.readyState == 4 && this.status == 200) {
+                            $("#cog-o-" + id).hide();
+                            $("#check-o-" + id).show();
+                        }
+                    };
+                    request.open("GET", "./functions/add-mod.php?bid=<?php echo $user['id'] ?>&id=" + id);
+                    request.send();
+                }
+            </script>
+            <?php
+                                while($mod = mysqli_fetch_array($mres)) {
+                                    if (!in_array($mod['id'], $modslist)) {
+                                        ?>
+            <tr>
+                <td scope="row"><?php echo $mod['pretty_name'] ?></td>
+                <td>
+                    <button id="btn-add-o-<?php echo $mod['id'] ?>" onclick="add_o(<?php echo $mod['id'] ?>)"
+                            class="btn btn-primary">Add to Build
+                    </button>
+                </td>
+                <td><em id="cog-o-<?php echo $mod['id'] ?>" style="display:none"
+                        class="fas fa-cog fa-spin fa-2x"></em><em
+                            id="check-o-<?php echo $mod['id'] ?>" style="display:none"
+                            class="text-success fas fa-check fa-2x"></em></td>
+            </tr>
+            <?php
+                                    }
+                                }
+                            } else {
+                                echo "<div style='display:block' class='invalid-feedback'>There are no files available.
+            Please upload files in <a href='./lib-other'>Files Library</a>
+    </div>
+    ";
+    } ?>
+    </tbody>
+    </table>
+</div>
+<?php }
+                }} else echo "<div class='card'><h3 class='text-info'>Select minecraft version and save before editing
+    mods.</h3></div>"; ?>
+</div>
+
+{% include "dashboard/footer.twig" %}

@@ -1,0 +1,324 @@
+{% include "dashboard/header.twig" %}
+
+<ul class="nav justify-content-end info-versions">
+    <li class="nav-item">
+        <a class="nav-link" href="./dashboard"><em class="fas fa-arrow-left fa-lg"></em> {{ modpack['display_name'] }}
+        </a>
+    </li>
+    <li id="latest-v-li" class="nav-item">
+        <span class="navbar-text"><em style="color:#2E74B2" class="fas fa-exclamation"></em> Latest: <strong
+                    id="latest-name">{{ modpack['latest']['name'] }}</strong></span>
+    </li>
+    <li id="latest-mc-li" class="nav-item">
+        <span class="navbar-text"><strong id="latest-mc">{{ modpack['latest']['minecraft'] }}</strong></span>
+    </li>
+    <div style="width:30px"></div>
+    <li id="rec-v-li" class="nav-item">
+        <span class="navbar-text"><em style="color:#329C4E" class="fas fa-check"></em> Recommended: <strong
+                    id="rec-name">{{ modpack['recommended']['name'] }}</strong></span>
+    </li>
+    <li id="rec-mc-li" class="nav-item">
+        <span class="navbar-text"><strong id="rec-mc">{{ modpack['recommended']['minecraft'] }}</strong></span>
+    </li>
+    <div style="width:30px"></div>
+</ul>
+<div class="main">
+    <div class="card">
+        <h2>Edit Modpack</h2>
+
+        {% if modpack['external']['error'] is defined %}
+            <div class="alert alert-danger" role="alert">
+                Modpack not found in technic launcher - slag wrong or not created?
+            </div>
+        {% endif %}
+        <hr>
+        <form method="POST">
+            <input type="hidden" name="action" value="edit">
+
+            <input autocomplete="off" id="dn" class="form-control" type="text" name="display_name"
+                   placeholder="Modpack name" value="{{ modpack['display_name'] }}"/>
+            <br/>
+            <input autocomplete="off" id="slug" pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$" class="form-control" type="text"
+                   name="name" placeholder="Modpack slug" value="{{ modpack['name'] }}"/>
+
+            <span id="warn_slug" style="display: none" class="text-warning"><strong>Warning!</strong> Modpack slug have to be the same as on the technic platform</span>
+            <br/>
+            <div class="custom-control custom-checkbox">
+                <input {% if modpack['public'] == 1 %}checked{% endif %} type="checkbox" name="public"
+                       class="custom-control-input" id="public">
+                <label class="custom-control-label" for="public">Public Modpack</label>
+            </div>
+            <br/>
+            <div class="btn-group" role="group" aria-label="Actions">
+                <button type="submit" name="type" value="rename" class="btn btn-primary">Save</button>
+                <button data-toggle="modal" data-target="#removeModpack" type="button" class="btn btn-danger">Remove
+                    Modpack
+                </button>
+            </div>
+
+        </form>
+        <div class="modal fade" id="removeModpack" tabindex="-1" role="dialog" aria-labelledby="rmp" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rmp">Delete modpack {{ modpack['display_name'] }}?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete modpack {{ modpack['display_name'] }} and all it's builds?
+                    </div>
+                    <form method="post">
+                        <input type="hidden" name="action" value="delete">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            $("#slug").on("keyup", function () {
+                if ($("#slug").val() !== "{{ modpack['name'] }}") {
+                    $("#warn_slug").show();
+                    $("#slug").addClass("border-warning");
+                } else {
+                    $("#warn_slug").hide();
+                    $("#slug").removeClass("border-warning");
+                }
+            });
+            $("#dn").on("keyup", function () {
+                var slug = slugify($(this).val());
+                console.log(slug);
+                $("#slug").val(slug);
+            });
+
+            function slugify(str) {
+                str = str.replace(/^\s+|\s+$/g, '');
+                str = str.toLowerCase();
+                var from = "àáãäâèéëêìíïîòóöôùúüûñšç·/_,:;";
+                var to = "aaaaaeeeeiiiioooouuuunsc------";
+                for (var i = 0, l = from.length; i < l; i++) {
+                    str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+                }
+                str = str.replace(/[^a-z0-9 -]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-');
+                return str;
+            }
+        </script>
+    </div>
+    <div style="margin-left: 0;margin-right: 0" class="row">
+        <div class="col-4">
+            <div class="card text-white bg-success" style="padding: 0">
+                <div class="card-header">Runs</div>
+                <div class="card-body">
+                    <center>
+                        <h1 class="display-2 w-lg"><em class="fas fa-play d-icon"></em><span
+                                    class="w-text"><?php echo $runsbig ?></span></h1>
+                        <h1 class="display-4 w-sm"><em class="fas fa-play d-icon"></em><?php echo $runssmall ?></h1>
+                    </center>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card bg-info text-white" style="padding: 0">
+                <div class="card-header">Downloads</div>
+                <div class="card-body">
+                    <center>
+                        <h1 class="display-2 w-lg"><em class="d-icon fas fa-download"></em><span
+                                    class="w-text"><?php echo $downloadsbig ?></span></h1>
+                        <h1 class="display-4 w-sm"><em class="d-icon fas fa-download"></em><?php echo $downloadssmall ?>
+                        </h1>
+                    </center>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card bg-primary text-white" style="padding: 0">
+                <div class="card-header">Likes</div>
+                <div class="card-body">
+                    <center>
+                        <h1 class="display-2 w-lg"><em class="fas fa-heart d-icon"></em><span
+                                    class="w-text"><?php echo $likesbig ?></span></h1>
+                        <h1 class="display-4 w-sm"><em class="fas fa-heart d-icon"></em><?php echo $likessmall ?></h1>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>New Build</h2>
+        <hr>
+        <form method="post">
+            <input type="hidden" name="action" value="newBuild">
+            <input pattern="^[a-zA-Z0-9.-]+$" required id="newbname" autocomplete="off" class="form-control" type="text"
+                   name="name" placeholder="Build name (e.g. 1.0) (a-z, A-Z, 0-9, dot and dash)"/>
+            <span id="warn_newbname" style="display: none"
+                  class="text-danger">Build with this name already exists.</span>
+            <br/>
+            <div class="btn-group">
+                <button id="create1" type="submit" name="type" value="new" class="btn btn-primary">Create Empty Build
+                </button>
+                <button id="create2" type="submit" name="type" value="update" class="btn btn-primary">Update latest
+                    version
+                </button>
+            </div>
+
+        </form>
+        <br/>
+        <h2>Copy Build</h2>
+        <hr>
+        <form action="./functions/copy-build.php" method="">
+            <input hidden type="text" name="id" value="{{ modpack['id'] }}">
+            <select required="" id="mplist" class="form-control">
+                <option value=null>Please select a modpack..</option>
+                {% for modpack in modpacks %}
+                    <option value="{{ modpack['id'] }}">{{ modpack['name'] }}</option>
+                {% endfor %}
+            </select>
+            <br/>
+            <select required="" name='build' id="buildlist" class="form-control">
+                <option value=null>Please select a build..</option>
+            </select>
+            <br/>
+            <input pattern="^[a-zA-Z0-9.-]+$" type="text" name="newname" id="newname" required class="form-control"
+                   placeholder="New Build Name">
+            <span id="warn_newname" style="display: none"
+                  class="text-danger">Build with this name already exists.</span>
+            <br/>
+            <button type="submit" id="copybutton" name="submit" value="copy" class="btn btn-primary">Copy</button>
+        </form>
+        <script type="text/javascript">
+            var builds = "<?php echo addslashes(json_encode($mpab)) ?>";
+            var sbn = "<?php echo addslashes(json_encode($sbn)) ?>";
+            var bd = JSON.parse(builds);
+            var sbna = JSON.parse(sbn);
+            console.log(sbna);
+            $("#mplist").change(function () {
+                $("#buildlist").children().each(function () {
+                    this.remove();
+                });
+                Object.keys(bd).forEach(function (element) {
+
+                    if ($("#mplist").val() == bd[element]['mpid']) {
+                        $("#buildlist").append("<option value='" + bd[element]['id'] + "'>" + bd[element]['mpname'] + " - " + bd[element]['name'] + "</option>")
+                    }
+                });
+            });
+            $("#newbname").on("keyup", function () {
+                if (sbna.indexOf($("#newbname").val()) == false) {
+                    $("#newbname").addClass("is-invalid");
+                    $("#warn_newbname").show();
+                    $("#create1").prop("disabled", true);
+                    $("#create2").prop("disabled", true);
+                } else {
+                    $("#newbname").removeClass("is-invalid");
+                    $("#warn_newbname").hide();
+                    $("#create1").prop("disabled", false);
+                    $("#create2").prop("disabled", false);
+                }
+            });
+            $("#newname").on("keyup", function () {
+                if (sbna.indexOf($("#newname").val()) == false) {
+                    $("#newname").addClass("is-invalid");
+                    $("#warn_newname").show();
+                    $("#copybutton").prop("disabled", true);
+                } else {
+                    $("#newname").removeClass("is-invalid");
+                    $("#warn_newname").hide();
+                    $("#copybutton").prop("disabled", false);
+                }
+            });
+        </script>
+    </div>
+    <div class="card">
+        <h2>Builds</h2>
+        <hr>
+        <table class="table table-responsive sortable table-striped">
+            <thead>
+            <tr>
+                <th style="width:20%" data-defaultsign="AZ" scope="col">Build</th>
+                <th style="width:20%" data-defaultsign="AZ" scope="col">Minecraft version</th>
+                <th style="width:20%" data-defaultsign="AZ" scope="col">Java version</th>
+                <th style="width:5%" data-defaultsign="_19" scope="col">Mods</th>
+                <th style="width:30%" data-defaultsign="disabled" scope="col"></th>
+                <th style="width:5%" data-defaultsign="disabled" scope="col"></th>
+            </tr>
+            </thead>
+            <tbody id="table-builds">
+            {% for build in modpack['builds'] %}
+                <tr rec="{% if build['name'] == modpack['recommended'] %}true{% else %}false{% endif %}"
+                    id="b-{{ build['id'] }}">
+                    <td scope="row">{{ build['name'] }}</td>
+                    <td scope="row">{{ build['minecraft'] }}</td>
+                    <td scope="row">{{ build['java'] }}</td>
+                    <td scope="row">{{ build['mods']|length }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
+                            <form method="post">
+                                <input type="hidden" name="build" value="{{ build['name'] }}">
+                                <a href="{{ url }}/dashboard/modpack/{{ modpack['id'] }}/build/{{ build['id'] }}"
+                                   class="btn btn-primary">Edit</a>
+                                <button onclick="remove_box({{ build['id'] }},'{{ build['name'] }}')"
+                                        data-toggle="modal" type="button"
+                                        data-target="#removeModal" class="btn btn-danger">Remove
+                                </button>
+                                <button id="rec-{{ build['id'] }}" name="action" value="setRecommended"
+                                        {% if build['name'] == modpack['recommended']['name'] %}disabled{% endif %}
+                                        class="btn btn-success">Set recommended
+                                </button>
+                            </form>
+
+                        </div>
+                    </td>
+                    <td>
+                        <em id="cog-({{ build['id'] }}" style="display:none;margin-top: 0.5rem"
+                            class="fas fa-cog fa-lg fa-spin"></em>
+                    </td>
+                </tr>
+
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="modal fade" id="removeModal" tabindex="-1" role="dialog" aria-labelledby="removeModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="removeModalLabel">Delete build <span id="build-title"></span>?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete build <span id="build-text"></span>?
+                    </div>
+                    <form method="post">
+                        <input type="hidden" name="action" value="deleteBuild">
+                        <input type="hidden" name="build" id="deleteBuildId">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
+                            <button type="submit" class="btn btn-danger">
+                                Delete
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            function remove_box(id, name) {
+                $("#build-title").text(name);
+                $("#build-text").text(name);
+                $("#remove-button").attr("onclick", "remove(" + id + ")");
+                $("#deleteBuildId").val(name);
+            }
+        </script>
+    </div>
+</div>
+
+{% include "dashboard/footer.twig" %}

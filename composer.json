@@ -1,0 +1,18 @@
+{
+  "require": {
+    "the-systems/route": "*",
+    "twig/twig": "3.4.*",
+    "cache/cache": "dev-master"
+  },
+  "repositories": [
+    {
+      "type": "git",
+      "url": "https://github.com/php-cache/cache.git"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Solder\\": "src/solder"
+    }
+  }
+}
